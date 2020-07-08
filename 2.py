@@ -5,7 +5,7 @@ import math
 valid_layers = ['*.Cu', 'F.Cu', 'B.Cu', 'F.SilkS', 'B.SilkS', 'F.Mask', 'B.Mask', 'Edge.Cuts', 'MULTILAYER']
 u = 5000
 u2 = 39.3701
-f = open('template.txt', 'r')
+f = open('old.PcbDoc', 'r')
 template = f.read()
 def set_layer(l):
   if l == '*.Cu':
@@ -30,7 +30,7 @@ def set_layer(l):
     l = 'KEEPOUT'
   return l
 
-def kicad_line(l, x_reference, y_reference):
+def kicad_line(l, rotation, x_reference, y_reference):
     line_argument = {}
     x_start = 0
     y_start = 0
@@ -41,11 +41,31 @@ def kicad_line(l, x_reference, y_reference):
     for x in l:
         if isinstance(x, list):
             if x[0].value() == "start":
-                x_start = (x[1] + x_reference) * u2
-                y_start = u - ((x[2] + y_reference)) * u2
+                if rotation == 0:
+                    x_start = (x[1] + x_reference) * u2
+                    y_start = u - ((x[2] + y_reference)) * u2
+                if rotation == 90:
+                    x_start = (x[2] + x_reference) * u2
+                    y_start = u - ((-x[1] + y_reference)) * u2
+                if rotation == -90 or rotation == 270:
+                    x_start = (-x[2] + x_reference) * u2
+                    y_start = u - ((x[1] + y_reference)) * u2
+                if rotation == 180:
+                    x_start = (-x[1] + x_reference) * u2
+                    y_start = u - ((-x[2] + y_reference)) * u2
             if x[0].value() == "end":
-                x_end = (x[1] + x_reference) * u2
-                y_end = u - ((x[2] + y_reference)) * u2
+                if rotation == 0:
+                    x_end = (x[1] + x_reference) * u2
+                    y_end = u - ((x[2] + y_reference)) * u2
+                if rotation == 90:
+                    x_end = (x[2] + x_reference) * u2
+                    y_end = u - ((-x[1] + y_reference)) * u2
+                if rotation == -90 or rotation == 270:
+                    x_end = (-x[2] + x_reference) * u2
+                    y_end = u - ((x[1] + y_reference)) * u2
+                if rotation == 180:
+                    x_end = (-x[1] + x_reference) * u2
+                    y_end = u - ((-x[2] + y_reference)) * u2
             if x[0].value() == "layer":
                 layer = x[1].value()
             if x[0].value() == "width":
@@ -96,8 +116,13 @@ def kicad_via(v):
         kicad_via_list.append(via_argument)
 
 
-def kicad_pad(p, x_reference, y_reference):
+def kicad_pad(p, rotation, x_reference, y_reference):
+    if isinstance(p[1], int) or isinstance(p[1], str):
+      pad_number = p[1]
+    else:
+      pad_number = p[1].value()
     pad_argument = {}
+    pad_name = ''
     x_center = 0
     y_center = 0
     x_size = 0
@@ -108,8 +133,18 @@ def kicad_pad(p, x_reference, y_reference):
     for x in p:
         if isinstance(x, list):
             if x[0].value() == "at":
-                x_center = (x[1] + x_reference) * u2
-                y_center = u - (x[2] + y_reference) * u2
+                if rotation == 0:
+                    x_center = (x[1] + x_reference) * u2
+                    y_center = u - ((x[2] + y_reference)) * u2
+                if rotation == 90:
+                    x_center = (x[2] + x_reference) * u2
+                    y_center = u - ((-x[1] + y_reference)) * u2
+                if rotation == -90 or rotation == 270:
+                    x_center = (-x[2] + x_reference) * u2
+                    y_center = u - ((x[1] + y_reference)) * u2
+                if rotation == 180:
+                    x_center = (-x[1] + x_reference) * u2
+                    y_center = u - ((-x[2] + y_reference)) * u2
             if x[0].value() == "size":
                 x_size = x[1] * u2
                 y_size = x[2] * u2
@@ -120,15 +155,12 @@ def kicad_pad(p, x_reference, y_reference):
                 layers = []
                 for a in x:
                   layers.append(a)
-        elif isinstance(x, int):
+        elif isinstance(x, int) or isinstance(x, str):
             continue
-        elif isinstance(x, str):
-            continue
-        elif x.value() == "circle" or x.value() == "oval":
+        elif x.value() == "circle" or "oval":
             shape = "circ"
-        elif x.value() == "rect" or x.value() == "roundrect":
+        elif x.value() == "rect" or "roundrect":
             shape = "rect"
-
     pad_argument.update(
         {
             "x_center": x_center,
@@ -184,16 +216,8 @@ def kicad_text(t, x_reference, y_reference, text):
       kicad_text_list.append(text_argument)
 
 
-def arc_calculation(x_start, y_start, x_end, y_end, start_angle, angle):
-    if y_end - y_start < 0 and x_end - x_start < 0 : start_angle = 180 - start_angle
-    elif y_end - y_start > 0 and x_end - x_start < 0 : start_angle = 180 + start_angle
-    elif y_end - y_start > 0 and x_end - x_start > 0 : start_angle = 360 - start_angle
-    end_angle = angle + start_angle
-    if end_angle > 360 : end_angle %= 360
-    return start_angle, end_angle
 
 def determine_area (x_start, y_start, x_center, y_center, start_angle):
-    print('##')
     if y_start < y_center and x_start > x_center : 
         print("first_area")
     elif y_start < y_center and x_start < x_center: 
@@ -215,12 +239,22 @@ def determine_area (x_start, y_start, x_center, y_center, start_angle):
     return start_angle
 #    if end_angle > 360 : end_angle %= 360
 #    return start_angle, end_angle
-def arc_math(component, x_reference, y_reference, x_start, y_start, x_center, y_center, angle):
+def arc_math(rotation, x_reference, y_reference, x_start, y_start, x_center, y_center, angle):
     delta_x = (x_start  - x_center)
     delta_y = (y_start  - y_center)
     radius = ((delta_x ** 2) + (delta_y ** 2)) ** 0.5
-    x_loc = (x_center + x_reference) * u2
-    y_loc = u - ((y_center + y_reference) * u2)
+    if rotation == 0:
+        x_loc = (x_center + x_reference) * u2
+        y_loc = u - ((y_center + y_reference)) * u2
+    if rotation == 90:
+        x_loc = (y_center + x_reference) * u2
+        y_loc = u - ((-x_center + y_reference)) * u2
+    if rotation == -90 or rotation == 270:
+        x_loc = (-y_center + x_reference) * u2
+        y_loc = u - ((x_center + y_reference)) * u2
+    if rotation == 180:
+        x_loc = (-x_center + x_reference) * u2
+        y_loc = u - ((-y_center + y_reference)) * u2
     start_angle = delta_y / radius
     start_angle = math.degrees(math.asin(start_angle))
     start_angle = determine_area (x_start, y_start, x_center, y_center, start_angle)
@@ -233,11 +267,13 @@ def arc_math(component, x_reference, y_reference, x_start, y_start, x_center, y_
     else :
         start_angle = - start_angle
         end_angle = - end_angle
+    start_angle = start_angle + rotation
+    end_angle = end_angle + rotation
     radius = radius * u2
     return (radius, x_loc, y_loc, start_angle, end_angle)
 
 
-def kicad_arc(component, a, x_reference, y_reference):
+def kicad_arc(a, rotation, x_reference, y_reference):
     arc_argument = {}
     x_start = 0
     y_start = 0
@@ -248,22 +284,20 @@ def kicad_arc(component, a, x_reference, y_reference):
     layer = ""
     for x in a:
         if isinstance(x, list):
+        
             if x[0].value() == "start":
                 x_center = x[1]
                 y_center = x[2]
-                print("__________________")
-                print('x_center:',x_center+x_reference,'y_center:',y_center+y_reference)
             if x[0].value() == "end":
                 x_start = x[1]
                 y_start = x[2]
-                print('x_start:',x_start+x_reference,'y_start:',y_start+y_reference)
             if x[0].value() == "angle":
                 angle = x[1]
             if x[0].value() == "layer":
                 layer = x[1].value()
             if x[0].value() == "width":
                 width = x[1]
-    radius, x_loc, y_loc, start_angle, end_angle = arc_math(component, x_reference, y_reference, x_start, y_start, x_center, y_center, angle)
+    radius, x_loc, y_loc, start_angle, end_angle = arc_math(rotation, x_reference, y_reference, x_start, y_start, x_center, y_center, angle)
     arc_argument.update(
         {
             "x_loc": x_loc,
@@ -283,21 +317,23 @@ def kicad_arc(component, a, x_reference, y_reference):
 def module(i):
     x_reference = 0
     y_reference = 0
+    rotation = 0
     for x in i:
         if isinstance(x, list):
             if x[0].value() == "at":
                 x_reference = x[1]
                 y_reference = x[2]
+                if len(x) > 3 : rotation = x[3]
             if x[0].value() == "fp_line":
-                kicad_line(x, x_reference, y_reference)
+                kicad_line(x, rotation, x_reference, y_reference)
             if x[0].value() == "fp_text":
                 if x[1].value() == "reference":
                     text = x[2].value()
                     kicad_text(x, x_reference, y_reference, text)
             if x[0].value() == "pad":
-                kicad_pad(x, x_reference, y_reference)
+                kicad_pad(x, rotation, x_reference, y_reference)
             if x[0].value() == "fp_arc":
-                kicad_arc(True, x, x_reference, y_reference)
+                kicad_arc(x, rotation, x_reference, y_reference)
 #            if x[0].value == 'fp_circle':
 #              circule(x, x_reference, y_reference)
 
@@ -420,9 +456,9 @@ for i in stmt:
         if i[0].value() == "module":
             module(i)
         if i[0].value() == "gr_arc":
-            kicad_arc(False, i, 0, 0)
+            kicad_arc(i, 0, 0, 0)
         if i[0].value() == "segment":
-            kicad_line(i, 0, 0)
+            kicad_line(i, 0, 0, 0)
         if i[0].value() == "gr_text":
             text = i[1]
             kicad_text(i, 0, 0, text)
