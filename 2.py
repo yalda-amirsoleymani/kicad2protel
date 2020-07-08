@@ -193,17 +193,29 @@ def arc_calculation(x_start, y_start, x_end, y_end, start_angle, angle):
     return start_angle, end_angle
 
 def determine_area (x_start, y_start, x_center, y_center, start_angle):
-    if y_start < y_center and x_start > x_center : area = "first_area"
+    print('##')
+    if y_start < y_center and x_start > x_center : 
+        print("first_area")
     elif y_start < y_center and x_start < x_center: 
-        print('**')
+        print("second_area")
         start_angle = -start_angle - 180
-        print('%%', start_angle)
-    elif y_start > y_center > 0 and x_start > x_center : area = "fourth_area"
-    elif y_start > y_center > 0 and x_start < x_center : start_angle = 180 - start_angle
+    elif y_start > y_center and x_start > x_center : 
+        print("fourth_area")
+    elif y_start > y_center and x_start < x_center :
+        print('third_area')
+        start_angle = 180 - start_angle
+    elif y_start == y_center and x_start < x_center :
+        start_angle = 180
+    elif y_start == y_center and x_start > x_center :
+        start_angle = 0
+    elif x_start == x_center and y_start < y_center :
+        start_angle = 90
+    elif x_start == x_center and y_start > y_center :
+        start_angle = 270
     return start_angle
 #    if end_angle > 360 : end_angle %= 360
 #    return start_angle, end_angle
-def arc_math(x_reference, y_reference, x_start, y_start, x_center, y_center, angle):
+def arc_math(component, x_reference, y_reference, x_start, y_start, x_center, y_center, angle):
     delta_x = (x_start  - x_center)
     delta_y = (y_start  - y_center)
     radius = ((delta_x ** 2) + (delta_y ** 2)) ** 0.5
@@ -213,14 +225,19 @@ def arc_math(x_reference, y_reference, x_start, y_start, x_center, y_center, ang
     start_angle = math.degrees(math.asin(start_angle))
     start_angle = determine_area (x_start, y_start, x_center, y_center, start_angle)
     end_angle = start_angle + angle
-    start_angle = -start_angle
-    end_angle = -end_angle
+    print("start_angle:",start_angle,"end_angle:",start_angle)
+    if start_angle < end_angle:
+        x = start_angle
+        start_angle = -end_angle
+        end_angle = -x
+    else :
+        start_angle = - start_angle
+        end_angle = - end_angle
     radius = radius * u2
-    print(start_angle, end_angle)
     return (radius, x_loc, y_loc, start_angle, end_angle)
 
 
-def kicad_arc(a, x_reference, y_reference):
+def kicad_arc(component, a, x_reference, y_reference):
     arc_argument = {}
     x_start = 0
     y_start = 0
@@ -234,19 +251,19 @@ def kicad_arc(a, x_reference, y_reference):
             if x[0].value() == "start":
                 x_center = x[1]
                 y_center = x[2]
-                print('x_c:',x_center+x_reference,'y_c:',y_center+y_reference)
+                print("__________________")
+                print('x_center:',x_center+x_reference,'y_center:',y_center+y_reference)
             if x[0].value() == "end":
                 x_start = x[1]
                 y_start = x[2]
-                print('x_s:',x_start,'y_s:',y_start)
+                print('x_start:',x_start+x_reference,'y_start:',y_start+y_reference)
             if x[0].value() == "angle":
                 angle = x[1]
-                print(angle)
             if x[0].value() == "layer":
                 layer = x[1].value()
             if x[0].value() == "width":
                 width = x[1]
-    radius, x_loc, y_loc, start_angle, end_angle = arc_math(x_reference, y_reference, x_start, y_start, x_center, y_center, angle)
+    radius, x_loc, y_loc, start_angle, end_angle = arc_math(component, x_reference, y_reference, x_start, y_start, x_center, y_center, angle)
     arc_argument.update(
         {
             "x_loc": x_loc,
@@ -271,7 +288,6 @@ def module(i):
             if x[0].value() == "at":
                 x_reference = x[1]
                 y_reference = x[2]
-                if len(x) > 3 : print(x[3])
             if x[0].value() == "fp_line":
                 kicad_line(x, x_reference, y_reference)
             if x[0].value() == "fp_text":
@@ -281,7 +297,7 @@ def module(i):
             if x[0].value() == "pad":
                 kicad_pad(x, x_reference, y_reference)
             if x[0].value() == "fp_arc":
-                kicad_arc(x, x_reference, y_reference)
+                kicad_arc(True, x, x_reference, y_reference)
 #            if x[0].value == 'fp_circle':
 #              circule(x, x_reference, y_reference)
 
@@ -404,7 +420,7 @@ for i in stmt:
         if i[0].value() == "module":
             module(i)
         if i[0].value() == "gr_arc":
-            kicad_arc(i, 0, 0)
+            kicad_arc(False, i, 0, 0)
         if i[0].value() == "segment":
             kicad_line(i, 0, 0)
         if i[0].value() == "gr_text":
