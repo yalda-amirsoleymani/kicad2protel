@@ -5,7 +5,7 @@ import math
 valid_layers = ['*.Cu', 'F.Cu', 'B.Cu', 'F.SilkS', 'B.SilkS', 'F.Mask', 'B.Mask', 'Edge.Cuts', 'MULTILAYER']
 u = 5000
 u2 = 39.3701
-f = open('old.PcbDoc', 'r')
+f = open('template.hamid.txt', 'r')
 template = f.read()
 def set_layer(l):
   if l == '*.Cu':
@@ -117,12 +117,12 @@ def kicad_via(v):
 
 
 def kicad_pad(p, rotation, x_reference, y_reference):
-    if isinstance(p[1], int) or isinstance(p[1], str):
-      pad_number = p[1]
-    else:
-      pad_number = p[1].value()
-    pad_argument = {}
     pad_name = ''
+    if isinstance(p[1], int) or isinstance(p[1], str):
+      pad_name = p[1]
+    else:
+      pad_name = p[1].value()
+    pad_argument = {}
     x_center = 0
     y_center = 0
     x_size = 0
@@ -167,6 +167,7 @@ def kicad_pad(p, rotation, x_reference, y_reference):
             "y_center": y_center,
             "x_size": x_size,
             "y_size": y_size,
+            "pad_name": pad_name,
             "drill": drill,
             "shape": shape,
         }
@@ -391,7 +392,7 @@ def protel_pad(kicad_pad_list):
         p = (
             "|RECORD=Pad|INDEXFORSAVE=1|SELECTION=FALSE|LAYER={}|"
             "LOCKED=FALSE|POLYGONOUTLINE=FALSE|USERROUTED=TRUE|UNIONINDEX=0|"
-            "SOLDERMASKEXPANSIONMODE=Rule|PASTEMASKEXPANSIONMODE=Rule|NAME=4|"
+            "SOLDERMASKEXPANSIONMODE=Rule|PASTEMASKEXPANSIONMODE=Rule|NAME={}|"
             "X={}mil|Y={}mil|XSIZE={}mil|YSIZE={}mil|SHAPE={}|HOLESIZE={}mil|"
             "ROTATION= 0.00000000000000E+0000|PLATED=TRUE|DAISYCHAIN=Load|"
             "CCSV=0|CPLV=0|CCWV=1|CENV=1|CAGV=1|CPEV=1|CSEV=1|CPCV=1|CPRV=1|"
@@ -415,6 +416,7 @@ def protel_pad(kicad_pad_list):
             "PADXOFFSET28=0mil|PADYOFFSET28=0mil|PADXOFFSET29=0mil|PADYOFFSET29=0mil|PADXOFFSET30=0mil|"
             "PADYOFFSET30=0mil|PADXOFFSET31=0mil|PADYOFFSET31=0mil|PADJUMPERID=0".format(
                 x["layer"],
+                x["pad_name"],
                 x["x_center"],
                 x["y_center"],
                 x["x_size"],
