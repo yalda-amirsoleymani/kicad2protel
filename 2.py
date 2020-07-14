@@ -5,7 +5,7 @@ import math
 valid_layers = ['*.Cu', 'F.Cu', 'B.Cu', 'F.SilkS', 'B.SilkS', 'F.Mask', 'B.Mask', 'Edge.Cuts', 'MULTILAYER']
 u = 5000
 u2 = 39.3701
-f = open('template.hamid.txt', 'r')
+f = open('template.txt', 'r')
 template = f.read()
 def set_layer(l):
   if l == '*.Cu':
@@ -149,18 +149,26 @@ def kicad_pad(p, rotation, x_reference, y_reference):
                 x_size = x[1] * u2
                 y_size = x[2] * u2
             if x[0].value() == "drill":
-                drill = x[1] * u2
+                if isinstance(x[1], int) or isinstance(x[1], float):
+                    drill = x[1] * u2
+                elif x[1].value() == 'oval':
+                    drill = x[2] * u2
             if x[0].value() == "layers":
                 x.pop(0)
                 layers = []
                 for a in x:
                   layers.append(a)
+            continue
         elif isinstance(x, int) or isinstance(x, str):
             continue
-        elif x.value() == "circle" or "oval":
-            shape = "circ"
-        elif x.value() == "rect" or "roundrect":
-            shape = "rect"
+        if x.value() == "circle":
+            shape = "ROUND"
+        elif x.value() == "oval":
+            shape = "ROUND"
+        elif x.value() == "rect":
+            shape = "RECTANGLE"
+        elif x.value() == "roundrect":
+            shape = "ROUNDEDRECTANGLE"
     pad_argument.update(
         {
             "x_center": x_center,
@@ -219,15 +227,11 @@ def kicad_text(t, x_reference, y_reference, text):
 
 
 def determine_area (x_start, y_start, x_center, y_center, start_angle):
-    if y_start < y_center and x_start > x_center : 
-        print("first_area")
-    elif y_start < y_center and x_start < x_center: 
-        print("second_area")
+#    if y_start < y_center and x_start > x_center : 
+    if y_start < y_center and x_start < x_center: 
         start_angle = -start_angle - 180
-    elif y_start > y_center and x_start > x_center : 
-        print("fourth_area")
+#    elif y_start > y_center and x_start > x_center : 
     elif y_start > y_center and x_start < x_center :
-        print('third_area')
         start_angle = 180 - start_angle
     elif y_start == y_center and x_start < x_center :
         start_angle = 180
@@ -260,7 +264,6 @@ def arc_math(rotation, x_reference, y_reference, x_start, y_start, x_center, y_c
     start_angle = math.degrees(math.asin(start_angle))
     start_angle = determine_area (x_start, y_start, x_center, y_center, start_angle)
     end_angle = start_angle + angle
-    print("start_angle:",start_angle,"end_angle:",start_angle)
     if start_angle < end_angle:
         x = start_angle
         start_angle = -end_angle
@@ -450,7 +453,7 @@ protel_line_list = []
 protel_pad_list = []
 protel_via_list = []
 protel_text_list = []
-with open("1.kicad_pcb", "r") as f:
+with open("relay.kicad_pcb", "r") as f:
     inp = f.read()
     stmt = sexpdata.loads(inp)
 for i in stmt:
