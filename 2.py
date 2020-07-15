@@ -226,7 +226,7 @@ def kicad_text(t, x_reference, y_reference, text):
 
 
 
-def determine_area (x_start, y_start, x_center, y_center, start_angle):
+def determine_area (delta_y, x_start, y_start, x_center, y_center, start_angle):
 #    if y_start < y_center and x_start > x_center : 
     if y_start < y_center and x_start < x_center: 
         start_angle = -start_angle - 180
@@ -237,10 +237,13 @@ def determine_area (x_start, y_start, x_center, y_center, start_angle):
         start_angle = 180
     elif y_start == y_center and x_start > x_center :
         start_angle = 0
-    elif x_start == x_center and y_start < y_center :
+    elif x_start == x_center and delta_y > 0:
         start_angle = 90
-    elif x_start == x_center and y_start > y_center :
+    elif x_start == x_center and y_start < y_center and delta_y < 0:
+        start_angle = -90
+    elif x_start == x_center and y_start > y_center and delta_y < 0:
         start_angle = 270
+
     return start_angle
 #    if end_angle > 360 : end_angle %= 360
 #    return start_angle, end_angle
@@ -262,7 +265,7 @@ def arc_math(rotation, x_reference, y_reference, x_start, y_start, x_center, y_c
         y_loc = u - ((-y_center + y_reference)) * u2
     start_angle = delta_y / radius
     start_angle = math.degrees(math.asin(start_angle))
-    start_angle = determine_area (x_start, y_start, x_center, y_center, start_angle)
+    start_angle = determine_area (delta_y, x_start, y_start, x_center, y_center, start_angle)
     end_angle = start_angle + angle
     if start_angle < end_angle:
         x = start_angle
@@ -273,6 +276,7 @@ def arc_math(rotation, x_reference, y_reference, x_start, y_start, x_center, y_c
         end_angle = - end_angle
     start_angle = start_angle + rotation
     end_angle = end_angle + rotation
+    print(x_center + x_reference,y_center + y_reference,start_angle,end_angle)
     radius = radius * u2
     return (radius, x_loc, y_loc, start_angle, end_angle)
 
