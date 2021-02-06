@@ -534,7 +534,7 @@ protel_via_list = []
 protel_text_list = []
 x= sys.argv[1]
 print("your file is converting")
-with open("{}.kicad_pcb".format(x), "r") as f:
+with open("{}".format(x), "r") as f:
     inp = f.read()
     stmt = sexpdata.loads(inp)
 for i in stmt:
