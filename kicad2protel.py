@@ -219,6 +219,7 @@ def kicad_text(t, x_reference, y_reference, text):
         if isinstance(x, list):
             if x[0].value() == "layer":
                 layer = x[1].value()
+                mirror = 'TRUE' if layer in ["B.Cu","B.SilkS","B.Mask","B.Paste"] else 'FALSE'
             if x[0].value() == "at":
                 x_pos = x[1] + x_reference
                 y_pos = u - (x[2] + y_reference) * u2
@@ -239,6 +240,7 @@ def kicad_text(t, x_reference, y_reference, text):
             "width": width,
             "layer": layer,
             "text": text,
+            "mirror": mirror
         }
     )
     if text_argument["layer"] in valid_layers:
@@ -417,8 +419,8 @@ def protel_text(kicad_txt_list):
         t = (
             "|RECORD=TEXT|SELECTION=FALSE|LAYER={}|LOCKED=FALSE|"
             "POLYGONOUTLINE=FALSE|USERROUTED=TRUE|X={}mil|Y= {}mil|HEIGHT={}mil|"
-            "FONT=DEFAULT|ROTATION=0.000|MIRROR=FALSE|TEXT={}|WIDTH={}mil".format(
-                x["layer"], x["x_pos"], x["y_pos"], x["height"], x["text"], x["width"]
+            "FONT=DEFAULT|ROTATION=0.000|MIRROR={}|TEXT={}|WIDTH={}mil".format(
+                x["layer"], x["x_pos"], x["y_pos"], x["height"], x["mirror"], x["text"], x["width"]
             )
         )
         protel_text_list.append(t)
