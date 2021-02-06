@@ -1,10 +1,10 @@
 This is a converter from KiCad PCB to Protel ASCII Format. If you want to change the format of your Kicad file, you can use it. After conversion, you have a file `1.PcbDoc` which you can open it in Altium designer.
 
 Here is the original PCB in KiCad:
-![KicadPCB](kicad.png)
+![KicadPCB](./kicad.png)
 
 And this is converted file in Altium Designer:
-![Protel](protel.png)
+![Protel](./protel.png)
 
 It's pretty simple, just run the `kicad2protel.py` from command line and give your KiCad PCB filename as first argument, like below:
 
