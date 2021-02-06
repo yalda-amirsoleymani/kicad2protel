@@ -1,5 +1,6 @@
 import sexpdata
 import math
+import sys
 
 valid_layers = [
     "*.Cu",
@@ -531,7 +532,9 @@ protel_line_list = []
 protel_pad_list = []
 protel_via_list = []
 protel_text_list = []
-with open("epiot-200.kicad_pcb", "r") as f:
+x= sys.argv[1]
+print("your file is converting")
+with open("{}.kicad_pcb".format(x), "r") as f:
     inp = f.read()
     stmt = sexpdata.loads(inp)
 for i in stmt:
